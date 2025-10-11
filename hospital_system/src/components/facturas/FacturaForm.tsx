@@ -1,126 +1,169 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import facturaService from '../../services/facturaService';
+import pacienteService from '../../services/pacienteService';
 import '../../css/Forms.css';
-import '../../css/Components.css';
 
 const FacturaForm = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [message, setMessage] = useState('');
+    const isEdit = Boolean(id);
 
-    const [factura, setFactura] = useState({
+    const [formData, setFormData] = useState({
         idPaciente: '',
         fechaEmision: '',
         total: 0,
-        estado: 'pendiente'
+        estado: 'Pendiente'
     });
 
+    const [pacientes, setPacientes] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        if (id) {
-            cargarFactura(id);
-        }
+        cargarDatos();
     }, [id]);
 
-    const cargarFactura = async (idFactura) => {
+    const cargarDatos = async () => {
         try {
-            const response = await facturaService.getById(idFactura);
-            if (response.data) {
-                setFactura(response.data);
+            // Cargar pacientes
+            const pacientesRes = await pacienteService.getAllPacientes();
+            setPacientes(pacientesRes.data);
+
+            // Si es edición, cargar factura
+            if (isEdit) {
+                const response = await facturaService.getById(id);
+                const factura = response.data;
+                setFormData({
+                    idPaciente: factura.idPaciente,
+                    fechaEmision: factura.fechaEmision,
+                    total: factura.total,
+                    estado: factura.estado
+                });
+            } else {
+                // Para nueva factura, establecer fecha actual
+                const today = new Date().toISOString().split('T')[0];
+                setFormData(prev => ({ ...prev, fechaEmision: today }));
             }
+
+            setLoading(false);
         } catch (error) {
-            setMessage('Error al cargar factura');
+            console.error('Error al cargar datos:', error);
+            alert('Error al cargar datos');
+            setLoading(false);
         }
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFactura({ ...factura, [name]: value });
+        setFormData({
+            ...formData,
+            [name]: name === 'total' ? parseFloat(value) || 0 : value
+        });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            if (id) {
-                await facturaService.update(id, factura);
-                setMessage('Factura actualizada correctamente');
+            const dataToSend = {
+                idPaciente: parseInt(formData.idPaciente),
+                fechaEmision: formData.fechaEmision,
+                total: parseFloat(formData.total),
+                estado: formData.estado
+            };
+
+            if (isEdit) {
+                await facturaService.update(id, dataToSend);
             } else {
-                await facturaService.create(factura);
-                setMessage('Factura creada correctamente');
+                await facturaService.create(dataToSend);
             }
-            setTimeout(() => {
-                navigate('/facturas');
-            }, 1500);
+            navigate('/facturas');
         } catch (error) {
-            setMessage('Error al guardar factura');
+            console.error('Error al guardar factura:', error);
+            alert('Error al guardar la factura');
         }
     };
 
+    if (loading) {
+        return <div className="loading">Cargando...</div>;
+    }
+
     return (
         <div className="form-container">
-            <h2>{id ? 'Editar Factura' : 'Nueva Factura'}</h2>
-            {message && (
-                <div className={`alert ${message.includes('Error') ? 'alert-error' : 'alert-success'}`}>
-                    {message}
-                </div>
-            )}
+            <h2>{isEdit ? 'Editar Factura' : 'Nueva Factura'}</h2>
+
             <form onSubmit={handleSubmit}>
+                {/* Selector de Paciente con Nombre */}
                 <div className="form-row">
                     <div className="form-group">
-                        <label>ID Paciente *</label>
-                        <input
-                            type="number"
+                        <label>Paciente *</label>
+                        <select
                             name="idPaciente"
-                            value={factura.idPaciente}
+                            value={formData.idPaciente}
                             onChange={handleChange}
-                            required
                             className="form-control"
-                        />
+                            required
+                        >
+                            <option value="">-- Seleccione un paciente --</option>
+                            {pacientes.map(paciente => (
+                                <option key={paciente.idPaciente} value={paciente.idPaciente}>
+                                    {paciente.nombres} {paciente.apellidos}
+                                </option>
+                            ))}
+                        </select>
                     </div>
+
                     <div className="form-group">
                         <label>Fecha Emisión *</label>
                         <input
                             type="date"
                             name="fechaEmision"
-                            value={factura.fechaEmision}
+                            value={formData.fechaEmision}
                             onChange={handleChange}
-                            required
                             className="form-control"
+                            required
                         />
                     </div>
                 </div>
+
+                {/* Total */}
                 <div className="form-group">
                     <label>Total (S/.) *</label>
                     <input
                         type="number"
                         name="total"
-                        value={factura.total}
+                        value={formData.total}
                         onChange={handleChange}
-                        required
-                        step="0.01"
                         className="form-control"
+                        step="0.01"
                         min="0"
+                        required
                     />
                 </div>
+
+                {/* Estado */}
                 <div className="form-group">
                     <label>Estado *</label>
                     <select
                         name="estado"
-                        value={factura.estado}
+                        value={formData.estado}
                         onChange={handleChange}
                         className="form-control"
+                        required
                     >
-                        <option value="pendiente">Pendiente</option>
-                        <option value="pagado">Pagado</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Pagada">Pagada</option>
+                        <option value="Cancelada">Cancelada</option>
                     </select>
                 </div>
-                <div className="form-buttons">
+
+                {/* Botones */}
+                <div className="form-actions">
                     <button type="submit" className="btn btn-success">
                         Guardar
                     </button>
                     <button
                         type="button"
-                        className="btn btn-danger"
+                        className="btn btn-secondary"
                         onClick={() => navigate('/facturas')}
                     >
                         Cancelar

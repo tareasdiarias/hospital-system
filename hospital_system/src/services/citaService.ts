@@ -3,41 +3,32 @@ import api from './api.js';
 const CITA_API = '/citas';
 
 const citaService = {
-    getAll: () => {
-        return api.get(CITA_API);
-    },
+    // Obtener todas las citas
+    getAllCitas: () => api.get(CITA_API),
 
-    getById: (id) => {
-        return api.get(`${CITA_API}/${id}`);
-    },
+    // ⭐ Obtener cita por ID (ESTO FALTABA)
+    getById: (id) => api.get(`${CITA_API}/${id}`),
 
-    getByPaciente: (idPaciente) => {
-        return api.get(`${CITA_API}/paciente/${idPaciente}`);
-    },
+    // Obtener citas por paciente
+    getCitasByPaciente: (idPaciente) => api.get(`${CITA_API}/paciente/${idPaciente}`),
 
-    getByMedico: (idMedico) => {
-        return api.get(`${CITA_API}/medico/${idMedico}`);
-    },
+    // Obtener citas por médico
+    getCitasByMedico: (idMedico) => api.get(`${CITA_API}/medico/${idMedico}`),
 
-    getByFecha: (fecha) => {
-        return api.get(`${CITA_API}/fecha/${fecha}`);
-    },
+    // Obtener citas por fecha
+    getCitasByFecha: (fecha) => api.get(`${CITA_API}/fecha/${fecha}`),
 
-    create: (cita) => {
-        return api.post(CITA_API, cita);
-    },
+    // Crear nueva cita
+    create: (cita) => api.post(CITA_API, cita),
 
-    update: (id, cita) => {
-        return api.put(`${CITA_API}/${id}`, cita);
-    },
+    // Actualizar cita existente
+    update: (id, cita) => api.put(`${CITA_API}/${id}`, cita),
 
-    cambiarEstado: (id, estado) => {
-        return api.patch(`${CITA_API}/${id}/estado`, { estado });
-    },
+    // Cambiar estado de cita
+    cambiarEstado: (id, estado) => api.patch(`${CITA_API}/${id}/estado`, { estado }),
 
-    delete: (id) => {
-        return api.delete(`${CITA_API}/${id}`);
-    },
+    // Eliminar cita
+    delete: (id) => api.delete(`${CITA_API}/${id}`)
 };
 
 export default citaService;

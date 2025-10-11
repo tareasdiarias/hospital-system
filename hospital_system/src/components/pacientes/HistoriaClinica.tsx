@@ -17,6 +17,10 @@ const HistoriaClinica = () => {
         descripcion: '',
     });
 
+    // ⭐ NUEVO: Verificar si el usuario es DOCTOR
+    const roles = JSON.parse(localStorage.getItem('roles') || '[]');
+    const isDoctor = roles.includes('ROLE_DOCTOR');
+
     useEffect(() => {
         cargarHistoria();
     }, [id]);
@@ -73,14 +77,33 @@ const HistoriaClinica = () => {
             <p><strong>Fecha Apertura:</strong> {historia.fechaApertura}</p>
             <p><strong>Observaciones:</strong> {historia.observaciones}</p>
 
-            <button
-                className="btn btn-primary"
-                onClick={() => setShowForm(!showForm)}
-            >
-                {showForm ? 'Cancelar' : 'Agregar Antecedente'}
-            </button>
+            {/* ⭐ BOTÓN: Solo visible para DOCTOR */}
+            {isDoctor && (
+                <button
+                    className="btn btn-primary"
+                    onClick={() => setShowForm(!showForm)}
+                >
+                    {showForm ? 'Cancelar' : 'Agregar Antecedente'}
+                </button>
+            )}
 
-            {showForm && (
+            {/* ⭐ MENSAJE: Visible para Admin y Recepcionista */}
+            {!isDoctor && (
+                <div style={{
+                    padding: '1rem',
+                    background: '#fff3cd',
+                    border: '1px solid #ffc107',
+                    borderRadius: '8px',
+                    color: '#856404',
+                    marginBottom: '1rem',
+                    marginTop: '1rem'
+                }}>
+                    ℹ️ Solo los doctores pueden agregar antecedentes médicos.
+                </div>
+            )}
+
+            {/* ⭐ FORMULARIO: Solo visible si es DOCTOR y showForm es true */}
+            {isDoctor && showForm && (
                 <form className="form-container" onSubmit={agregarAntecedente}>
                     <div className="form-group">
                         <label>Tipo</label>

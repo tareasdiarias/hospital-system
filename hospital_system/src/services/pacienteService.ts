@@ -1,52 +1,52 @@
-import api from './api.js';
-
-const PACIENTE_API = '/pacientes';
+import api from './api';
 
 const pacienteService = {
-    // Obtener todos los pacientes
-    getAll: () => {
-        return api.get(PACIENTE_API);
+    // ⭐ Métodos con nombres consistentes
+    getAllPacientes: async () => {
+        return await api.get('/pacientes');
     },
 
-    // Obtener paciente por ID
-    getById: (id) => {
-        return api.get(`${PACIENTE_API}/${id}`);
+    getPacienteById: async (id: number) => {
+        return await api.get(`/pacientes/${id}`);
     },
 
-    // Obtener paciente por DNI
-    getByDni: (dni) => {
-        return api.get(`${PACIENTE_API}/dni/${dni}`);
+    getPacienteByDni: async (dni: string) => {
+        return await api.get(`/pacientes/dni/${dni}`);
     },
 
-    // Crear nuevo paciente
-    create: (paciente) => {
-        return api.post(PACIENTE_API, paciente);
+    createPaciente: async (paciente: any) => {
+        return await api.post('/pacientes', paciente);
     },
 
-    // Actualizar paciente
-    update: (id, paciente) => {
-        return api.put(`${PACIENTE_API}/${id}`, paciente);
+    updatePaciente: async (id: number, paciente: any) => {
+        return await api.put(`/pacientes/${id}`, paciente);
     },
 
-    // Eliminar paciente
-    delete: (id) => {
-        return api.delete(`${PACIENTE_API}/${id}`);
+    deletePaciente: async (id: number) => {
+        return await api.delete(`/pacientes/${id}`);
     },
 
-    // Obtener historia clinica
-    getHistoriaClinica: (idPaciente) => {
-        return api.get(`${PACIENTE_API}/${idPaciente}/historia-clinica`);
+    // Historia Clínica
+    getHistoriaClinica: async (idPaciente: number) => {
+        return await api.get(`/pacientes/${idPaciente}/historia-clinica`);
     },
 
-    // Obtener antecedentes medicos
-    getAntecedentes: (idHistoria) => {
-        return api.get(`${PACIENTE_API}/historia/${idHistoria}/antecedentes`);
+    // Antecedentes Médicos
+    getAntecedentes: async (idHistoria: number) => {
+        return await api.get(`/pacientes/historia/${idHistoria}/antecedentes`);
     },
 
-    // Agregar antecedente medico
-    addAntecedente: (idHistoria, antecedente) => {
-        return api.post(`${PACIENTE_API}/historia/${idHistoria}/antecedentes`, antecedente);
+    addAntecedente: async (idHistoria: number, antecedente: any) => {
+        return await api.post(`/pacientes/historia/${idHistoria}/antecedentes`, antecedente);
     },
+
+    // ⭐ ALIAS para compatibilidad (mantener código antiguo funcionando)
+    getAll: async () => pacienteService.getAllPacientes(),
+    getById: async (id: number) => pacienteService.getPacienteById(id),
+    getByDni: async (dni: string) => pacienteService.getPacienteByDni(dni),
+    create: async (paciente: any) => pacienteService.createPaciente(paciente),
+    update: async (id: number, paciente: any) => pacienteService.updatePaciente(id, paciente),
+    delete: async (id: number) => pacienteService.deletePaciente(id),
 };
 
 export default pacienteService;
