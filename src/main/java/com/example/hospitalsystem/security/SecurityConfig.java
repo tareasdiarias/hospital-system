@@ -32,37 +32,59 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
 
     @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> 
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/error").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-    System.out.println("🌍 Configurando CORS...");
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Patterns permite usar el asterisco para Render
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "https://*.onrender.com"
+        ));
 
-    CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
 
-    // ⚡ SOLUCIÓN: Usamos setAllowedOriginPatterns para permitir el asterisco de Render
-    configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:3000",
-            "http://localhost:5173",
-            "https://*.onrender.com"
-    ));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
-    // Permitir todos los métodos HTTP
-    configuration.setAllowedMethods(Arrays.asList(
-            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
-    ));
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
 
-    // Permitir todos los headers
-    configuration.setAllowedHeaders(Arrays.asList("*"));
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 
-    // Permitir credenciales
-    configuration.setAllowCredentials(true);
-
-    // Exponer header Authorization
-    configuration.setExposedHeaders(Arrays.asList("Authorization"));
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-
-    System.out.println("✅ CORS configurado correctamente para Local y Render");
-
-    return source;
-}
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }
