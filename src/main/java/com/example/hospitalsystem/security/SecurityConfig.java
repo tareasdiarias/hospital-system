@@ -32,89 +32,37 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                // ⭐ HABILITAR CORS
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // Deshabilitar CSRF (no necesario para API REST stateless)
-                .csrf(csrf -> csrf.disable())
-
-                // Configurar sesiones como STATELESS (usamos JWT)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // Configurar autorización de requests
-                .authorizeHttpRequests(auth -> auth
-                        // ⭐ Endpoints públicos
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-
-                        // Resto requiere autenticación
-                        .anyRequest().authenticated()
-                )
-
-                // Configurar provider de autenticación
-                .authenticationProvider(authenticationProvider())
-
-                // Agregar filtro JWT antes del filtro de autenticación
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
-        System.out.println("✅ SecurityFilterChain configurado con CORS habilitado");
-
-        return http.build();
-    }
-
-    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        System.out.println("🌍 Configurando CORS...");
+    System.out.println("🌍 Configurando CORS...");
 
-        CorsConfiguration configuration = new CorsConfiguration();
+    CorsConfiguration configuration = new CorsConfiguration();
 
-        // Permitir orígenes del frontend
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",
-                "http://localhost:5173"
-                "https://*.onrender.com"
-        ));
+    // ⚡ SOLUCIÓN: Usamos setAllowedOriginPatterns para permitir el asterisco de Render
+    configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "https://*.onrender.com"
+    ));
 
-        // Permitir todos los métodos HTTP
-        configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
-        ));
+    // Permitir todos los métodos HTTP
+    configuration.setAllowedMethods(Arrays.asList(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+    ));
 
-        // Permitir todos los headers
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+    // Permitir todos los headers
+    configuration.setAllowedHeaders(Arrays.asList("*"));
 
-        // Permitir credenciales (cookies, authorization headers)
-        configuration.setAllowCredentials(true);
+    // Permitir credenciales
+    configuration.setAllowCredentials(true);
 
-        // Exponer header Authorization para que el frontend pueda leerlo
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+    // Exponer header Authorization
+    configuration.setExposedHeaders(Arrays.asList("Authorization"));
 
-        // Aplicar configuración a todas las rutas
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
 
-        System.out.println("✅ CORS configurado para: http://localhost:3000 y http://localhost:5173");
+    System.out.println("✅ CORS configurado correctamente para Local y Render");
 
-        return source;
-    }
-
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    return source;
+}
 }
